@@ -97,7 +97,7 @@ function show(i){
   <div class="card">
     <div class="pid">${esc(d.id)}</div>
     <div class="topic">${esc(d.topic)}</div>
-    <div class="ans"><span class="k">정답</span>${esc(d.answer)}</div>
+    <div class="ans"><span class="k">정답</span>${esc(d.answer_value || d.answer)}</div>
     <div class="meta">${[d.page && `해설 ${d.page}쪽`, d.rate && `정답률 ${esc(d.rate)}`].filter(Boolean).join(' · ')}</div>
     ${d.problem ? `<div class="label">문제</div><div class="prob">${paras(d.problem)}</div>` : ''}
     <div class="label">해설</div>

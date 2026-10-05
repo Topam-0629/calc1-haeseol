@@ -136,7 +136,7 @@ function show(i, keep){
     <div class="label">해설</div>
     <div class="exp">${paras(d.explanation)}</div>
     ${d.note ? `<div class="note"><b>검증 메모</b> · 책의 표기 오류: ${esc(d.note)}</div>` : ''}
-    ${imgs.length ? `<details><summary>원본 사진 보기 ↓</summary>${imgs.map(f => `<img class="page-img" src="pages/${esc(f)}" loading="lazy">`).join('')}<div class="nav"><button onclick="rot()">↻ 회전</button></div></details>` : ''}
+    ${imgs.length ? `<details><summary>원본 사진 보기${imgs.length > 1 ? ` (${imgs.length}쪽)` : ''} ↓</summary>${imgs.map((f, k) => `${imgs.length > 1 ? `<div class="meta" style="margin-top:18px">${k + 1} / ${imgs.length}</div>` : ''}<img class="page-img" src="pages/${esc(f)}" loading="lazy">`).join('')}<div class="nav"><button onclick="rot()">↻ 회전</button></div></details>` : ''}
   </div>`;
   renderMath($('#out'));
   if (!keep) window.scrollTo({top:0});

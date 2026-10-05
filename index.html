@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>미적분Ⅰ 해설 찾기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<style>
+:root{--bg:#fff;--fg:#111;--muted:#777;--line:#e4e4e4;--soft:#f5f5f5}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.8 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard",sans-serif;text-align:center}
+.wrap{max-width:720px;margin:0 auto;padding:56px 16px 96px}
+h1{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:0}
+.sub{color:var(--muted);font-size:13px;margin:6px 0 28px}
+form{display:flex;gap:8px;max-width:420px;margin:0 auto}
+input{flex:1;min-width:0;font:inherit;font-size:22px;text-align:center;padding:12px;border:1.5px solid var(--fg);border-radius:0;background:var(--bg);color:var(--fg);outline:none}
+button{font:inherit;font-size:14px;padding:10px 16px;border:1px solid var(--fg);border-radius:0;background:var(--bg);color:var(--fg);cursor:pointer}
+button:hover{background:var(--fg);color:var(--bg)}
+button.primary{background:var(--fg);color:var(--bg);font-size:16px;padding:12px 22px}
+.nav{display:flex;gap:8px;justify-content:center;margin:14px 0 0;flex-wrap:wrap}
+.nav button{border-color:var(--line)}
+.card{margin-top:44px;padding-top:36px;border-top:1px solid var(--fg)}
+.pid{font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.topic{color:var(--muted);font-size:14px;margin-top:8px}
+.ans{display:inline-block;margin:22px 0 6px;border:2px solid var(--fg);padding:8px 28px;font-size:22px;font-weight:700}
+.ans .k{font-size:13px;font-weight:500;color:var(--muted);margin-right:10px;vertical-align:middle}
+.meta{color:var(--muted);font-size:13px}
+.label{font-size:12px;letter-spacing:.2em;color:var(--muted);margin:40px 0 12px}
+.label::before,.label::after{content:"";display:inline-block;width:28px;height:1px;background:var(--line);vertical-align:middle;margin:0 12px}
+.prob{background:var(--soft);padding:20px;word-break:keep-all}
+.exp p,.prob p{margin:0 0 16px;line-height:2.4;word-break:keep-all}.prob p:last-child{margin:0}
+.step{display:inline-block;font-size:11px;font-weight:700;background:var(--fg);color:var(--bg);padding:1px 7px;margin-right:6px;vertical-align:2px}
+.katex{font-size:1.08em}
+.katex-display{margin:.6em 0;overflow-x:auto;overflow-y:hidden}
+.note{margin-top:28px;border:1px dashed var(--fg);padding:12px 16px;font-size:14px}
+.empty{color:var(--muted);padding:40px 0}
+.list{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:16px}
+.chip{font-size:13px;padding:4px 10px;border-color:var(--line)}
+details{margin-top:40px}
+details summary{cursor:pointer;color:var(--muted);font-size:13px;list-style:none}
+details summary::-webkit-details-marker{display:none}
+.page-img{width:100%;margin-top:12px;border:1px solid var(--line);filter:grayscale(1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>자이스토리 고2 미적분Ⅰ</h1>
+  <div class="sub">문제 번호를 입력하세요 · 예) 181, A07</div>
+  <form id="f">
+    <input id="q" type="text" autocomplete="off" placeholder="번호" autofocus>
+    <button class="primary" type="submit">찾기</button>
+  </form>
+  <div class="nav"><button id="prev">← 이전</button><button id="all">전체 목록</button><button id="next">다음 →</button></div>
+  <div id="out"></div>
+</div>
+<script src="data.js"></script>
+<script>
+const DATA = (window.DATA || []).filter(d => d.id && !d.continuation)
+  .sort((a,b) => (a.section||'').localeCompare(b.section||'') || a.num - b.num);
+const $ = s => document.querySelector(s);
+let cur = -1, deg = 0;
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const paras = s => String(s ?? '').split(/\n+/).filter(Boolean)
+  .map(l => '<p>' + esc(l).replace(/^(\d(?:st|nd|rd|th))\s*/, '<span class="step">$1</span>') + '</p>').join('');
+function renderMath(el){
+  if (window.renderMathInElement) renderMathInElement(el, {
+    delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false}],
+    throwOnError: false,
+    preProcess: m => '\\displaystyle ' + m
+  });
+}
+function norm(q){
+  const m = q.trim().toUpperCase().replace(/\s+/g,'').match(/^([A-Z]?)0*(\d+)$/);
+  return m ? { sec: m[1], num: +m[2] } : null;
+}
+function search(e){
+  e && e.preventDefault();
+  const n = norm($('#q').value);
+  if (!n) return;
+  const hits = DATA.map((d,i)=>[d,i]).filter(([d]) => d.num === n.num && (!n.sec || d.section === n.sec));
+  if (hits.length === 1) return show(hits[0][1]);
+  $('#out').innerHTML = hits.length
+    ? `<div class="card">같은 번호가 여러 개 있어요<div class="list">${hits.map(([d,i]) => `<button class="chip" onclick="show(${i})">${d.id}</button>`).join('')}</div></div>`
+    : `<div class="card empty">${esc($('#q').value)}번 해설을 찾지 못했어요</div>`;
+}
+function show(i){
+  cur = i; deg = 0;
+  const d = DATA[i];
+  $('#q').value = d.id;
+  history.replaceState(null, '', '#' + d.id);
+  const imgs = d.img ? String(d.img).split(/\s*,\s*/) : [];
+  $('#out').innerHTML = `
+  <div class="card">
+    <div class="pid">${esc(d.id)}</div>
+    <div class="topic">${esc(d.topic)}</div>
+    <div class="ans"><span class="k">정답</span>${esc(d.answer)}</div>
+    <div class="meta">${[d.page && `해설 ${d.page}쪽`, d.rate && `정답률 ${esc(d.rate)}`].filter(Boolean).join(' · ')}</div>
+    ${d.problem ? `<div class="label">문제</div><div class="prob">${paras(d.problem)}</div>` : ''}
+    <div class="label">해설</div>
+    <div class="exp">${paras(d.explanation)}</div>
+    ${d.note ? `<div class="note"><b>검증 메모</b> · 책의 표기 오류: ${esc(d.note)}</div>` : ''}
+    ${imgs.length ? `<details><summary>원본 사진 보기 ↓</summary>${imgs.map(f => `<img class="page-img" src="pages/${esc(f)}" loading="lazy">`).join('')}<div class="nav"><button onclick="rot()">↻ 회전</button></div></details>` : ''}
+  </div>`;
+  renderMath($('#out'));
+  window.scrollTo({top:0});
+}
+function rot(){ deg = (deg + 90) % 360; document.querySelectorAll('.page-img').forEach(el => el.style.transform = `rotate(${deg}deg)`); }
+function listAll(){
+  $('#out').innerHTML = `<div class="card"><div class="meta">총 ${DATA.length}문제</div><div class="list">${DATA.map((d,i)=>`<button class="chip" onclick="show(${i})">${d.id}</button>`).join('')}</div></div>`;
+}
+$('#f').onsubmit = search;
+$('#prev').onclick = () => show(Math.max(0, cur - 1));
+$('#next').onclick = () => show(Math.min(DATA.length - 1, cur + 1));
+$('#all').onclick = listAll;
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowLeft') $('#prev').click();
+  if (e.key === 'ArrowRight') $('#next').click();
+});
+window.addEventListener('DOMContentLoaded', () => {
+  if (location.hash) { $('#q').value = decodeURIComponent(location.hash.slice(1)); search(); }
+});
+</script>
+</body>
+</html>

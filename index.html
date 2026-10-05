@@ -48,9 +48,9 @@ details summary::-webkit-details-marker{display:none}
 <body>
 <div class="wrap">
   <h1>자이스토리 고2 미적분Ⅰ</h1>
-  <div class="sub">문제 번호를 입력하세요 · 예) 181, A07</div>
+  <div class="sub">문제 번호를 입력하세요 · 예) 181, 7</div>
   <form id="f">
-    <input id="q" type="text" autocomplete="off" placeholder="번호" autofocus>
+    <input id="q" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" placeholder="번호" autofocus>
     <button class="primary" type="submit">찾기</button>
   </form>
   <div class="nav"><button id="prev">← 이전</button><button id="all">전체 목록</button><button id="next">다음 →</button></div>
@@ -90,7 +90,7 @@ function search(e){
 function show(i){
   cur = i; deg = 0;
   const d = DATA[i];
-  $('#q').value = d.id;
+  $('#q').value = d.num;
   history.replaceState(null, '', '#' + d.id);
   const imgs = d.img ? String(d.img).split(/\s*,\s*/) : [];
   $('#out').innerHTML = `
@@ -113,6 +113,7 @@ function listAll(){
   $('#out').innerHTML = `<div class="card"><div class="meta">총 ${DATA.length}문제</div><div class="list">${DATA.map((d,i)=>`<button class="chip" onclick="show(${i})">${d.id}</button>`).join('')}</div></div>`;
 }
 $('#f').onsubmit = search;
+$('#q').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); });
 $('#prev').onclick = () => show(Math.max(0, cur - 1));
 $('#next').onclick = () => show(Math.min(DATA.length - 1, cur + 1));
 $('#all').onclick = listAll;
@@ -122,7 +123,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') $('#next').click();
 });
 window.addEventListener('DOMContentLoaded', () => {
-  if (location.hash) { $('#q').value = decodeURIComponent(location.hash.slice(1)); search(); }
+  if (location.hash) { $('#q').value = decodeURIComponent(location.hash.slice(1)).replace(/\D/g, ''); search(); }
 });
 </script>
 </body>

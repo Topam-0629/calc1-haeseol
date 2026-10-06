@@ -42,6 +42,10 @@ button.primary{background:var(--fg);color:var(--bg);font-size:16px;padding:12px 
 .pid .mark{font-size:14px;font-weight:700;vertical-align:middle;margin-left:10px;border:1.5px solid var(--fg);padding:2px 8px;letter-spacing:0}
 .profile{font-size:13px;margin:10px 0 0}
 .profile button{font-size:12px;padding:3px 10px;margin-left:6px;border-color:var(--line)}
+.secs{display:flex;justify-content:center;gap:0;margin:0 auto 12px}
+.secs button{width:64px;font-size:18px;font-weight:700;padding:8px 0;margin-left:-1px}
+.secs button.on{background:var(--fg);color:var(--bg)}
+.secs button:disabled{color:var(--line);border-color:var(--line);cursor:default;background:var(--bg)}
 .empty{color:var(--muted);padding:40px 0}
 .list{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:16px}
 .chip{font-size:13px;padding:4px 10px;border-color:var(--line)}
@@ -55,7 +59,8 @@ details summary::-webkit-details-marker{display:none}
 <div class="wrap">
   <h1>자이스토리 고2 미적분Ⅰ</h1>
   <div class="profile" id="profile"></div>
-  <div class="sub">문제 번호를 입력하세요 · 예) 181, 7</div>
+  <div class="sub">단원을 고르고 번호만 입력하세요</div>
+  <div class="secs" id="secs"></div>
   <form id="f">
     <input id="q" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" placeholder="번호" autofocus>
     <button class="primary" type="submit">찾기</button>
@@ -69,6 +74,13 @@ const DATA = (window.DATA || []).filter(d => d.id && !d.continuation)
   .sort((a,b) => (a.section||'').localeCompare(b.section||'') || a.num - b.num);
 const $ = s => document.querySelector(s);
 let cur = -1, deg = 0;
+const SECS = ['A','B','C'];
+const has = sec => DATA.some(d => d.section === sec);
+let sec = (() => { try { const v = localStorage.getItem('sec'); return v && has(v) ? v : 'A'; } catch { return 'A'; } })();
+function renderSecs(){
+  $('#secs').innerHTML = SECS.map(x => `<button type="button" class="${x === sec ? 'on' : ''}" ${has(x) ? '' : 'disabled title="아직 준비 중"'} onclick="pickSec('${x}')">${x}</button>`).join('');
+}
+function pickSec(x){ sec = x; try { localStorage.setItem('sec', x); } catch {} renderSecs(); $('#q').focus(); if ($('#q').value) search(); }
 const ls = { get(k){ try { return localStorage.getItem(k); } catch { return null; } }, set(k,v){ try { localStorage.setItem(k,v); } catch {} } };
 let profile = ls.get('profile') || '';
 const key = () => 'wrong:' + profile;
@@ -113,15 +125,17 @@ function search(e){
   e && e.preventDefault();
   const n = norm($('#q').value);
   if (!n) return;
-  const hits = DATA.map((d,i)=>[d,i]).filter(([d]) => d.num === n.num && (!n.sec || d.section === n.sec));
+  const want = n.sec || sec;
+  const hits = DATA.map((d,i)=>[d,i]).filter(([d]) => d.num === n.num && d.section === want);
   if (hits.length === 1) return show(hits[0][1]);
   $('#out').innerHTML = hits.length
     ? `<div class="card">같은 번호가 여러 개 있어요<div class="list">${hits.map(([d,i]) => `<button class="chip" onclick="show(${i})">${d.id}</button>`).join('')}</div></div>`
-    : `<div class="card empty">${esc($('#q').value)}번 해설을 찾지 못했어요</div>`;
+    : `<div class="card empty">${want}단원 ${esc($('#q').value)}번 해설을 찾지 못했어요</div>`;
 }
 function show(i, keep){
   cur = i; deg = 0;
   const d = DATA[i];
+  if (d.section !== sec) { sec = d.section; renderSecs(); }
   $('#q').value = d.num;
   history.replaceState(null, '', '#' + d.id);
   const imgs = d.img ? String(d.img).split(/\s*,\s*/) : [];
@@ -143,7 +157,7 @@ function show(i, keep){
 }
 function rot(){ deg = (deg + 90) % 360; document.querySelectorAll('.page-img').forEach(el => el.style.transform = `rotate(${deg}deg)`); }
 function listAll(){
-  $('#out').innerHTML = `<div class="card"><div class="meta">총 ${DATA.length}문제</div><div class="list">${DATA.map((d,i)=>`<button class="chip ${wrong.has(d.id) ? 'wrong' : ''}" onclick="show(${i})">${d.id}</button>`).join('')}</div></div>`;
+  $('#out').innerHTML = `<div class="card"><div class="meta">${sec}단원 ${DATA.filter(d => d.section === sec).length}문제</div><div class="list">${DATA.map((d,i)=>[d,i]).filter(([d]) => d.section === sec).map(([d,i])=>`<button class="chip ${wrong.has(d.id) ? 'wrong' : ''}" onclick="show(${i})">${d.id}</button>`).join('')}</div></div>`;
 }
 function listWrong(){
   const items = DATA.map((d,i)=>[d,i]).filter(([d]) => wrong.has(d.id));
@@ -159,13 +173,14 @@ $('#all').onclick = listAll;
 $('#wrongs').onclick = listWrong;
 updWrongBtn();
 renderProfile();
+renderSecs();
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   if (e.key === 'ArrowLeft') $('#prev').click();
   if (e.key === 'ArrowRight') $('#next').click();
 });
 window.addEventListener('DOMContentLoaded', () => {
-  if (location.hash) { $('#q').value = decodeURIComponent(location.hash.slice(1)).replace(/\D/g, ''); search(); }
+  if (location.hash) { const h = decodeURIComponent(location.hash.slice(1)).toUpperCase(); const m = h.match(/^([A-Z])/); if (m && has(m[1])) sec = m[1]; renderSecs(); $('#q').value = h.replace(/\D/g, ''); search(); }
 });
 </script>
 </body>

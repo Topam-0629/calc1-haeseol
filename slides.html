@@ -62,7 +62,7 @@ footer .prog{font-size:12px;color:var(--muted);min-width:44px;text-align:center}
   <span class="prog" id="prog"></span>
   <button class="next" id="next">다음 단계 ▶</button>
 </footer>
-<script src="slides_data.js?v=1"></script>
+<script src="slides_data.js?v=2"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -136,7 +136,7 @@ let sx = null;
 $('#main').addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, {passive:true});
 $('#main').addEventListener('touchend', e => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx; if (dx < -60) next(); if (dx > 60) prev(); sx = null; });
 window.addEventListener('DOMContentLoaded', () => {
-  const h = location.hash.match(/^#(vol[12])-(\d+)$/);
+  const h = location.hash.match(/^#(vol2e|vol[12])-(\d+)$/);
   if (h && SLIDES[h[1]]) { vol = h[1]; idx = Math.max(0, Math.min(SLIDES[vol].items.length - 1, +h[2] - 1)); }
   renderTabs(); build();
 });

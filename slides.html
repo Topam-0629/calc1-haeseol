@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>마법의 키 풀이 넘기기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<style>
+:root{--fg:#111;--bg:#fff;--muted:#777;--line:#e2e2e2;--soft:#f4f4f4;--hl:#fff176}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--fg);font:16px/1.7 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard",sans-serif;word-break:keep-all;overflow-wrap:anywhere;display:flex;flex-direction:column}
+header{padding:12px 16px 8px;border-bottom:1.5px solid var(--fg)}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.top h1{font-size:17px;margin:0;font-weight:800;letter-spacing:-.02em}
+.tabs{display:flex;margin-left:auto}
+.tabs button{font:inherit;font-size:13px;padding:5px 12px;border:1px solid var(--fg);background:var(--bg);color:var(--fg);margin-left:-1px;cursor:pointer}
+.tabs button.on{background:var(--fg);color:var(--bg)}
+.nums{display:flex;gap:4px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none}
+.nums::-webkit-scrollbar{display:none}
+.nums button{flex:0 0 auto;font:inherit;font-size:13px;min-width:36px;padding:3px 6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.nums button.on{border-color:var(--fg);background:var(--fg);color:var(--bg)}
+.nums button.done{border-color:var(--fg)}
+main{flex:1;overflow-y:auto;padding:16px;max-width:760px;width:100%;margin:0 auto}
+.head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.no{font-size:30px;font-weight:800;line-height:1}
+.kt{font-size:13px;font-weight:700;background:var(--fg);color:var(--bg);padding:1px 7px}
+.kn{font-size:14px;font-weight:600}
+.src{margin-left:auto;font-size:12px;color:var(--muted)}
+.prob{border:1.5px solid var(--fg);padding:12px 14px;margin-bottom:14px}
+.prob .cond{border:1px solid var(--fg);padding:6px 10px;margin:6px 0}
+.choices{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:6px}
+.note{font-size:13px;color:var(--muted)}
+.step{opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s;margin:0 0 10px;padding:10px 12px;border-left:4px solid var(--line);background:var(--soft)}
+.step.show{opacity:1;transform:none}
+.step .lb{display:block;font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-bottom:2px}
+.step.key{border-left-color:var(--fg)}
+.step.ans{border:2px solid var(--fg);background:var(--bg);font-size:20px;font-weight:800}
+.step.ans .lb{font-size:11px}
+.tg{display:inline-block;font-size:11px;font-weight:700;border:1px solid var(--fg);padding:0 4px;margin-right:5px;background:var(--bg);vertical-align:1px}
+mark{background:var(--hl)}
+footer{border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;align-items:center;background:var(--bg)}
+footer button{font:inherit;padding:12px 16px;border:1.5px solid var(--fg);background:var(--bg);color:var(--fg);cursor:pointer}
+footer .next{flex:1;background:var(--fg);color:var(--bg);font-weight:700;font-size:16px}
+footer .prog{font-size:12px;color:var(--muted);min-width:44px;text-align:center}
+.katex{font-size:1.05em}
+.katex-display{margin:.3em 0;overflow-x:auto;overflow-y:hidden}
+</style>
+</head>
+<body>
+<header>
+  <div class="top"><h1>마법의 키 · 풀이 넘기기</h1><div class="tabs" id="tabs"></div></div>
+  <div class="nums" id="nums"></div>
+</header>
+<main id="main"></main>
+<footer>
+  <button id="prev">◀</button>
+  <button id="all">전체</button>
+  <span class="prog" id="prog"></span>
+  <button class="next" id="next">다음 단계 ▶</button>
+</footer>
+<script src="slides_data.js?v=1"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let vol = 'vol1', idx = 0, shown = 0, steps = [];
+try { const v = localStorage.getItem('sl_vol'); if (v && SLIDES[v]) vol = v; } catch {}
+
+function probHtml(t){
+  t = String(t || '');
+  const m = t.search(/①/);
+  let body = m >= 0 ? t.slice(0, m) : t, ch = m >= 0 ? t.slice(m) : '';
+  body = esc(body.trim()).replace(/\[조건\]\n?/g, '').replace(/\n/g, '<br>');
+  let out = body;
+  if (ch) {
+    const parts = ch.split(/([①②③④⑤])/).filter(Boolean);
+    let items = '';
+    for (let i = 0; i < parts.length; i += 2) items += `<span><b>${parts[i]}</b> ${esc((parts[i+1]||'').trim())}</span>`;
+    out += `<div class="choices">${items}</div>`;
+  }
+  return out;
+}
+const tag = s => esc(s).replace(/\[((?:K|U)\d+(?:-\d+[a-z]?)?(?:[,·/ ]+(?:K|U)?\d+(?:-\d+[a-z]?)?)*)\]/g, '<span class="tg">$1</span>');
+
+function build(){
+  const it = SLIDES[vol].items[idx];
+  steps = [];
+  if (it.goal || it.need) steps.push(['목표 · 필요', `<b>목표</b> ${esc(it.goal)}<br><b>필요</b> ${esc(it.need)}`, '']);
+  if (it.clue) steps.push(['단서 → 키', esc(it.clue), 'key']);
+  if (it.sec === 'school') steps.push(['풀이', '학교 기출은 학습지 PDF의 정답과 키 경로를 보세요.', '']);
+  else it.sol.forEach((s, i) => steps.push([`${i + 1}단계`, tag(s), '']));
+  steps.push(['정답', esc(it.answer), 'ans']);
+  const sec = {practice:'키 연습', mix:'실전 믹스', school:'학교 기출'}[it.sec] || '';
+  $('#main').innerHTML = `
+    <div class="head"><span class="no">${String(it.no).padStart(2,'0')}</span>
+      ${it.sec === 'practice' ? `<span class="kt">${esc(it.key)}</span><span class="kn">${esc(it.keyname)}</span>` : `<span class="kn">${sec}</span>`}
+      <span class="src">${esc(it.pid)}${it.rate && it.rate !== '—' ? ' · 정답률 ' + esc(it.rate) : ''}</span></div>
+    <div class="prob">${it.problem ? probHtml(it.problem) : '<span class="note">학교 기출 문제는 학습지 PDF에서 보세요.</span>'}
+      ${it.fig ? '<div class="note" style="margin-top:6px">그래프는 학습지 PDF의 그림을 보세요.</div>' : ''}</div>
+    <div id="steps">${steps.map(([lb, h, c]) => `<div class="step ${c}"><span class="lb">${lb}</span>${h}</div>`).join('')}</div>`;
+  if (window.renderMathInElement) renderMathInElement($('#main'), {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}], throwOnError:false,
+    preProcess: m => m.replace(/\\lim_/g,'\\lim\\limits_').replace(/\\frac/g,'\\dfrac').replace(/\\begin\{cases\}/g,'\\begin{dcases}').replace(/\\end\{cases\}/g,'\\end{dcases}')});
+  shown = 0; render(); renderNums(); $('#main').scrollTop = 0;
+}
+function render(){
+  document.querySelectorAll('.step').forEach((el, i) => el.classList.toggle('show', i < shown));
+  $('#prog').textContent = `${shown}/${steps.length}`;
+  $('#next').textContent = shown < steps.length ? (shown === steps.length - 1 ? '정답 보기 ▶' : '다음 단계 ▶') : '다음 문제 ▶';
+  const last = document.querySelectorAll('.step.show'); if (last.length) last[last.length - 1].scrollIntoView({block:'nearest', behavior:'smooth'});
+}
+function next(){
+  if (shown < steps.length) { shown++; render(); }
+  else if (idx < SLIDES[vol].items.length - 1) { idx++; build(); }
+}
+function prev(){
+  if (shown > 0) { shown--; render(); }
+  else if (idx > 0) { idx--; build(); shown = steps.length; render(); }
+}
+function renderTabs(){
+  $('#tabs').innerHTML = Object.keys(SLIDES).map(v => `<button class="${v===vol?'on':''}" onclick="setVol('${v}')">${SLIDES[v].name}</button>`).join('');
+}
+function renderNums(){
+  $('#nums').innerHTML = SLIDES[vol].items.map((it, i) => `<button class="${i===idx?'on':''}" onclick="go(${i})">${String(it.no).padStart(2,'0')}</button>`).join('');
+  const on = $('#nums .on'); if (on) on.scrollIntoView({inline:'center', block:'nearest'});
+}
+function setVol(v){ vol = v; idx = 0; try { localStorage.setItem('sl_vol', v); } catch {} renderTabs(); build(); }
+function go(i){ idx = i; build(); }
+$('#next').onclick = next; $('#prev').onclick = prev;
+$('#all').onclick = () => { shown = steps.length; render(); };
+$('#main').addEventListener('click', e => { if (!e.target.closest('button')) next(); });
+document.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); } if (e.key === 'ArrowLeft') prev(); });
+let sx = null;
+$('#main').addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, {passive:true});
+$('#main').addEventListener('touchend', e => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx; if (dx < -60) next(); if (dx > 60) prev(); sx = null; });
+window.addEventListener('DOMContentLoaded', () => {
+  const h = location.hash.match(/^#(vol[12])-(\d+)$/);
+  if (h && SLIDES[h[1]]) { vol = h[1]; idx = Math.max(0, Math.min(SLIDES[vol].items.length - 1, +h[2] - 1)); }
+  renderTabs(); build();
+});
+</script>
+</body>
+</html>
